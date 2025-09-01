@@ -104,6 +104,42 @@ def _apply(op: str, b: float, a: float) -> float:
         return a / b
     raise ValueError(op)
 
+
+def eval_infix(expr: str) -> float:
+    """使用调度场算法计算中缀表达式的值。"""
+    tokens = _tokenize(expr)
+    output = []  # 输出队列
+    operators = []  # 操作符栈
+    
+    for token in tokens:
+        if token.replace(".", "").isdigit():  # 数字
+            output.append(float(token))
+        elif token == "(":
+            operators.append(token)
+        elif token == ")":
+            while operators and operators[-1] != "(":
+                op = operators.pop()
+                b, a = output.pop(), output.pop()
+                output.append(_apply(op, b, a))
+            if operators and operators[-1] == "(":
+                operators.pop()  # 移除左括号
+        elif token in {"+", "-", "*", "/"}:
+            while (operators and operators[-1] != "(" and
+                   operators[-1] in {"+", "-", "*", "/"} and
+                   _precedence(operators[-1]) >= _precedence(token)):
+                op = operators.pop()
+                b, a = output.pop(), output.pop()
+                output.append(_apply(op, b, a))
+            operators.append(token)
+    
+    # 处理剩余的操作符
+    while operators:
+        op = operators.pop()
+        b, a = output.pop(), output.pop()
+        output.append(_apply(op, b, a))
+    
+    return output[0] if output else 0.0
+
 # ===== 简易矩阵类 =====
 class Matrix:
     """支持加法、乘法、行列式的简易矩阵（仅二维列表实现）。"""
